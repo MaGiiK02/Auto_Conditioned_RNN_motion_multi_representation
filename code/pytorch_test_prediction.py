@@ -114,7 +114,7 @@ class acLSTM(nn.Module):
 
 #numpy array inital_seq_np: batch*seq_len*frame_size
 #return numpy b*generate_frames_number*frame_data
-def generate_seq(initial_seq_np, generate_frames_number, model, save_dance_folder, representation,In_frame_size):
+def generate_seq(initial_seq_np, generate_frames_number, model, representation,In_frame_size):
     Hip_index = read_bvh.joint_index['hip']
     if representation != "positional": Hip_index = 0 # Hip placed at the start of the data for rotations
     #set hip_x and hip_z as the difference from the future frame to current frame
@@ -126,23 +126,10 @@ def generate_seq(initial_seq_np, generate_frames_number, model, save_dance_folde
     
     initial_seq  = torch.autograd.Variable(torch.FloatTensor(initial_seq_dif_hip_x_z_np.tolist()).cuda() )
  
-    predict_seq = model.forward(initial_seq, generate_frames_number)
+    predict_seq = model.forward(initial_seq, generate_frames_number+1)
     
     batch=initial_seq_np.shape[0]
    
-    for b in range(batch):
-        
-        out_seq=np.array(predict_seq[b].data.tolist()).reshape(-1,In_frame_size)
-        last_x=0.0
-        last_z=0.0
-        for frame in range(out_seq.shape[0]):
-            out_seq[frame,Hip_index*3]=out_seq[frame,Hip_index*3]+last_x
-            last_x=out_seq[frame,Hip_index*3]
-            
-            out_seq[frame,Hip_index*3+2]=out_seq[frame,Hip_index*3+2]+last_z
-            last_z=out_seq[frame,Hip_index*3+2]
-            
-        read_bvh.write_traindata_to_bvh(save_dance_folder+"out"+"%02d"%b+".bvh", out_seq, representation)
     return np.array(predict_seq.data.tolist()).reshape(batch, -1, In_frame_size)
 
 
@@ -180,7 +167,7 @@ def load_dances(dance_folder):
     return dances
     
 # dances: [dance1, dance2, dance3,....]
-def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate_frames_number, read_weight_path, write_bvh_motion_folder, representation):
+def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate_frames_number, read_weight_path, our_folder, representation):
     
     torch.cuda.set_device(0)
 
@@ -209,63 +196,56 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
     
     
     dance_batch=[]
+    ref_batch = []
     for b in range(dances_test_size):
         #randomly pick up one dance. the longer the dance is the more likely the dance is picked up
         dance_id = dance_len_lst[seeded_random.randint(0,random_range)]
         dance=dances[dance_id].copy()
         dance_len = dance.shape[0]
             
-        start_id= seeded_random.randint(10, int(dance_len-initial_seq_len*speed-10)) #the first and last several frames are sometimes noisy. 
+        start_id= seeded_random.randint(10, int(dance_len-initial_seq_len*speed-10-(generate_frames_number*speed))) #the first and last several frames are sometimes noisy. 
         sample_seq=[]
         for i in range(initial_seq_len):
             sample_seq=sample_seq+[dance[int(i*speed+start_id)]]
 
-        # ref_seq=[]
-        # for i in range(initial_seq_len+generate_frames_number):
-        #     ref_seq=ref_seq+[dance[int(i*speed+start_id)]]
+        ref_seq=[]
+        for i in range(initial_seq_len+generate_frames_number):
+            ref_seq=ref_seq+[dance[int(i*speed+start_id)]]
         
+        ref_batch=ref_batch+[ref_seq]
         dance_batch=dance_batch+[sample_seq]
-
-    # save reference sequencies
-    # for b in range(dances_test_size):
-    #     out_seq=np.array(write_bvh_motion_folder[b].data.tolist()).reshape(-1,In_frame_size)
-    #     last_x=0.0
-    #     last_z=0.0
-    #     for frame in range(out_seq.shape[0]):
-    #         out_seq[frame,Hip_index*3]=out_seq[frame,Hip_index*3]+last_x
-    #         last_x=out_seq[frame,Hip_index*3]
-            
-    #         out_seq[frame,Hip_index*3+2]=out_seq[frame,Hip_index*3+2]+last_z
-    #         last_z=out_seq[frame,Hip_index*3+2]
-            
-    #     read_bvh.write_traindata_to_bvh(write_bvh_motion_folder+"gt"+"%02d"%b+".bvh", out_seq, representation)
 
     # Prediction        
     dance_batch_np=np.array(dance_batch)    
-    pred_seq = generate_seq(dance_batch_np, generate_frames_number, model, write_bvh_motion_folder, representation, frame_size)
+    pred_seq = generate_seq(dance_batch_np, generate_frames_number, model, representation, frame_size)
     
-    # if representation == 'euler': 
-    #     ref_seq = fk_euler(ref_seq)
-    #     pred_seq = fk_euler(pred_seq)
-    # elif representation == '6d': 
-    #     ref_seq = fk_6D(ref_seq)
-    #     pred_seq = fk_6D(pred_seq)
-    # elif representation == 'quaternions': 
-    #     ref_seq = fk_quaternions(ref_seq)
-    #     pred_seq = fk_quaternions(pred_seq)
+    ref_batch = torch.Tensor(ref_batch)
+    pred_seq = torch.Tensor(pred_seq)
+    if representation == 'euler': 
+        ref_batch = fk_euler(ref_batch, sequence_length=initial_seq_len+generate_frames_number)
+        pred_seq = fk_euler(pred_seq, sequence_length=initial_seq_len+generate_frames_number)
+    elif representation == '6d': 
+        ref_batch = fk_6D(ref_batch, sequence_length=initial_seq_len+generate_frames_number)
+        pred_seq = fk_6D(pred_seq, sequence_length=initial_seq_len+generate_frames_number)
+    elif representation == 'quaternions': 
+        ref_batch = fk_quaternions(ref_batch, sequence_length=initial_seq_len+generate_frames_number)
+        pred_seq = fk_quaternions(pred_seq, sequence_length=initial_seq_len+generate_frames_number)
+    ref_batch = torch.Tensor(ref_batch)
+    pred_seq = torch.Tensor(pred_seq)
 
-    # errors = pd.DataFrame(columns=['Sequence', 'MSE_FK'])
-    # # Dance wise error
-    # for b in range(dances_test_size):
-    #     sequence_error = torch.mean(torch.sum(torch.square(ref_seq[b] - pred_seq[b])))
-    #     print(f"Sequence {b}: {sequence_error.item()}")
-    #     errors = errors.append({
-    #         "Sequence": b,
-    #         "MSE_FK": sequence_error 
-    #     }, ignore_index=True)
-    # errors.to_csv(write_bvh_motion_folder + "sequencies_errors.csv")
+    cols = ['Sequence'] + [f'mse_frame_error_{frame_num}' for frame_num in range(generate_frames_number)]
+    errors = pd.DataFrame(columns=cols)
+
+    # Dance-frame wise error
+    for b in range(dances_test_size):
+        sequence_errors = {'Sequence': b,}
+        for f in range(initial_seq_len, initial_seq_len+generate_frames_number):
+            frame_error = torch.mean(torch.sum(torch.square(ref_batch[b][f] - pred_seq[b][f]))).item()
+            sequence_errors[f'mse_frame_error_{f-initial_seq_len}'] = frame_error
+        errors = errors.append(sequence_errors, ignore_index=True)
+    errors['mse_frame_error_avg'] = errors.mean(numeric_only=True, axis=1)
+    errors.to_csv(our_folder + "sequencies_errors.csv")
         
-
     # global_error = torch.mean(torch.sum(torch.square(ref_seq - pred_seq)))
     # print(global_error)
 
@@ -276,8 +256,8 @@ if __name__ == '__main__' :
     parser = argparse.ArgumentParser(description='ACLSTM-Test & Syntesis')
     parser.add_argument('--read_weight_path', default='',
                 help='Path where to load the weights.')
-    parser.add_argument('--write_bvh_motion_folder', default=None,
-                help='Path to the whwere to store the output bvh files.')
+    parser.add_argument('--out_folder', default=None,
+                help='Path to the where to store the output errors files.')
     parser.add_argument('--dances_folder', default=None,
                 help='Path to the folder contining the original bvh files.')
     parser.add_argument('--dance_frame_rate', default=None,
@@ -286,29 +266,28 @@ if __name__ == '__main__' :
                 help='The number of dances to use to do the evaluation (note :dances will be processed as a single batch as such keep the number low(0 Default: 5)')
     parser.add_argument('--initial_seq_len', default=15,
                 help='The amount of frames to use as inputo to start the generation. (Default: 15)')
-    parser.add_argument('--generate_frames_number', default=400,
-                help='The amount of frames to generate to create the motion. (Default: 400)')
+    parser.add_argument('--comparison_number', default=30,
+                help='The amount of frames to use after the initial for the evaluation. (Default: 30)')
     parser.add_argument('--representation', default=None,
             help='The representation to use to represent the rotation to the model [positional, euler, 6d, quaternions], used to infer the loss function.')
     
     args = parser.parse_args()
 
     read_weight_path=args.read_weight_path                   # Example None           # Example "../train_weight_aclstm_indian/"
-    write_bvh_motion_folder=args .write_bvh_motion_folder    # Example "../train_tmp_bvh_aclstm_indian/"
+    out_folder=args.out_folder    # Example "../train_tmp_bvh_aclstm_indian/"
     dances_folder=args.dances_folder                         # Example "../train_data_xyz/indian/"
     dance_frame_rate=int(args.dance_frame_rate)              # Example 60
     dances_test_size=int(args.dances_test_size)              # Example 5                              
     representation=args.representation                       # Example positional 
     initial_seq_len=args.initial_seq_len                     # Example 15 
-    generate_frames_number=args.generate_frames_number       # Example 400
+    generate_frames_number=args.comparison_number            # Example 400
 
-    if not os.path.exists(write_bvh_motion_folder):
-        os.makedirs(write_bvh_motion_folder)
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
         
+    dances= load_dances(dances_folder)
 
-dances= load_dances(dances_folder)
-
-test(dances, dance_frame_rate, dances_test_size, initial_seq_len, generate_frames_number, read_weight_path,  write_bvh_motion_folder, representation)
+    test(dances, dance_frame_rate, dances_test_size, initial_seq_len, generate_frames_number, read_weight_path,  out_folder, representation)
 
 
 

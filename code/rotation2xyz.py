@@ -43,6 +43,14 @@ def get_skeleton_position(motion, non_end_bones, skel):
 
     return pos_dict
 
+def get_skeleton_rotations(motion, non_end_bones, skel):
+    rotation_dict = OrderedDict()
+    for bone in skel.keys():
+        rotation = get_rotations(bone, motion, non_end_bones, skel)
+        rotation_dict[bone] = rotation
+
+    return rotation_dict
+
 
 def get_bone_start_end(positions, skeleton):
     bone_list = []
@@ -69,11 +77,35 @@ def rotation_dic_to_vec(rotation_dictionary, non_end_bones, position):
 
     return motion_vec
 
+def rotation_dic_to_vec_hip(rotation_dictionary, non_end_bones, position_hip):
+    motion_vec = np.zeros(6 + len(non_end_bones) * 3)
+    motion_vec[0:3] = position_hip
+    motion_vec[3] = rotation_dictionary['hip'][0]
+    motion_vec[4] = rotation_dictionary['hip'][1]
+    motion_vec[5] = rotation_dictionary['hip'][2]
+    for i in range(0, len(non_end_bones)):
+        motion_vec[3 * (i + 2)] = rotation_dictionary[non_end_bones[i]][0]
+        motion_vec[3 * (i + 2) + 1] = rotation_dictionary[non_end_bones[i]][1]
+        motion_vec[3 * (i + 2) + 2] = rotation_dictionary[non_end_bones[i]][2]
+
+    return motion_vec
+
 
 def get_pos(bone, motion, non_end_bones, skel):
     global_transform = np.dot(get_hip_transform(motion, skel), get_global_transform(bone, skel, motion, non_end_bones))
     position = np.dot(global_transform, np.array([0, 0, 0, 1])[:, np.newaxis])
     return position
+
+def get_rotations(bone, motion, non_end_bones, skel):
+    if bone == 'hip': 
+        return motion[3:6]
+    else:
+        try:
+            bone_index = non_end_bones.index(bone)
+        except:
+            return None
+        bone_index = non_end_bones.index(bone)
+        return motion[6 + 3 * bone_index: 6 + (3 * bone_index) +3]
 
 
 def get_global_transform(bone, skel, motion, non_end_bones):

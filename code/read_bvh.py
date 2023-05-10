@@ -7,7 +7,7 @@ from collections import Counter
 
 import transforms3d.euler as euler
 import transforms3d.quaternions as quat
-
+import torch
 from pylab import *
 from PIL import Image
 import os
@@ -20,7 +20,7 @@ import read_bvh_hierarchy
 import rotation2xyz as helper
 from rotation2xyz import *
 
-
+import utils.rotations_conversion as rot_conv
 
 def get_pos_joints_index(raw_frame_data, non_end_bones, skeleton):
     pos_dic=  helper.get_skeleton_position(raw_frame_data, non_end_bones, skeleton)
@@ -56,14 +56,6 @@ def parse_frames(bvh_filename):
        data[i,:] = line_f
            
    return data
-
-
-standard_bvh_file="../train_data_bvh/standard.bvh"
-weight_translation=0.01
-skeleton, non_end_bones=read_bvh_hierarchy.read_bvh_hierarchy(standard_bvh_file)    
-sample_data=parse_frames(standard_bvh_file)
-joint_index= get_pos_joints_index(sample_data[0],non_end_bones, skeleton)
-
    
 def get_frame_format_string(bvh_filename):
     bvh_file = open(bvh_filename, "r")
@@ -113,20 +105,20 @@ def get_motion_center(bvh_data):
         center=center+frame[0:3]
     center=center/bvh_data.shape[0]
     return center
- 
-def augment_train_frame_data(train_frame_data, T, axisR) :
-    
+
+def augment_positional_frame(train_frame_data, T, axisR):
+    # Input series of hip positions without the hip [, 171] for a single motion frame
     hip_index=joint_index['hip']
     hip_pos=train_frame_data[hip_index*3 : hip_index*3+3]
     
     for i in range(int(len(train_frame_data)/3) ):
         if(i!=hip_index):
-            train_frame_data[i*3: i*3+3]=train_frame_data[i*3: i*3+3]+hip_pos
+            train_frame_data[i*3: i*3+3]=train_frame_data[i*3: i*3+3]+hip_pos 
     
     
     mat_r_augment=euler.axangle2mat(axisR[0:3], axisR[3])
     n=int(len(train_frame_data)/3)
-    for i in range(n):
+    for i in range(n): # for each frame
         raw_data=train_frame_data[i*3:i*3+3]
         new_data = np.dot(mat_r_augment, raw_data)+T
         train_frame_data[i*3:i*3+3]=new_data
@@ -138,17 +130,21 @@ def augment_train_frame_data(train_frame_data, T, axisR) :
             train_frame_data[i*3: i*3+3]=train_frame_data[i*3: i*3+3]-hip_pos
     
     return train_frame_data
-    
-def augment_train_data(train_data, T, axisR):
-    result=list(map(lambda frame: augment_train_frame_data(frame, T, axisR), train_data))
-    return np.array(result)
- 
+   
+def augment_positional(train_data, T, axisR):
+    result=list(map(lambda frame: augment_positional_frame(frame, T, axisR), train_data))
+    return np.array(result) 
 
-    
+#########################################################################
+#########################################################################
+## Skeleton to representation ##########################################
+#########################################################################
+#########################################################################  
+  
 #input a vector of data, with the first three data as translation and the rest the euler rotation
 #output a vector of data, with the first three data as translation not changed and the rest to quaternions.
 #note: the input data are in z, x, y sequence
-def get_one_frame_training_format_data(raw_frame_data, non_end_bones, skeleton):
+def load_frame_as_positional(raw_frame_data, non_end_bones, skeleton):
     pos_dic=  helper.get_skeleton_position(raw_frame_data, non_end_bones, skeleton)
     new_data= np.zeros(len(pos_dic.keys())*3)
     i=0
@@ -165,16 +161,70 @@ def get_one_frame_training_format_data(raw_frame_data, non_end_bones, skeleton):
     #print new_data
     new_data=new_data*0.01
     return new_data
-    
 
+def load_frame_as_eulers(raw_frame_data, non_end_bones, skeleton, augmented_pos):
+    # Extraction of the hip position
+    augmented_hip = augmented_pos[:3]
+
+    # Extraction of the rotations
+    rotation_dict = helper.get_skeleton_rotations(raw_frame_data, non_end_bones, skeleton)
+
+    new_data= np.zeros(len(rotation_dict.keys())*3 + 3)
+    for joint in rotational_joints_index.keys():
+        if rotation_dict[joint] is None: continue # Teminal bones have no rotations
+        i = rotational_joints_index[joint]
+        new_data[3+i*3:i*3+3+3]=np.fromiter(rotation_dict[joint], dtype=np.float) * (math.pi / 180) # from grades to radiants
+
+    new_data[:3] = augmented_hip # append hip at head of the vector where the model expects it
+
+    return new_data
+    
+def load_frame_as_6d(raw_frame_data, non_end_bones, skeleton, augmented_pos):
+    # Extraction of the hip position
+    augmented_hip = augmented_pos[:3]
+
+    # Extraction of the rotations
+    rotation_dict = helper.get_skeleton_rotations(raw_frame_data, non_end_bones, skeleton)
+
+    new_data= np.zeros(len(rotation_dict.keys())*6 + 3)
+    for joint in rotational_joints_index.keys():
+        if rotation_dict[joint] is None: continue # Teminal bones have no rotations
+        i = rotational_joints_index[joint]
+        euler_rotation = torch.tensor(rotation_dict[joint], dtype=float) * (math.pi / 180) #load angles are in zxy  + from grades to radiants
+        rot_matrix = rot_conv.euler_angles_to_matrix(euler_rotation,"ZXY")
+        d6_rep = rot_conv.matrix_to_rotation_6d(rot_matrix).numpy()
+        new_data[3+i*6:i*6+6+3] = d6_rep
+
+    new_data[:3] = augmented_hip # append hip at head of the vector where the model expects it
+
+    return new_data
+
+def load_frame_as_quaternions(raw_frame_data, non_end_bones, skeleton, augmented_pos):
+    # Extraction of the hip position
+    augmented_hip = augmented_pos[:3]
+
+    # Extraction of the rotations
+    rotation_dict = helper.get_skeleton_rotations(raw_frame_data, non_end_bones, skeleton)
+
+    new_data= np.zeros(len(rotation_dict.keys())*4 + 3)
+    for joint in rotational_joints_index.keys():
+        if rotation_dict[joint] is None: continue # Teminal bones have no rotations
+        i = rotational_joints_index[joint]
+        euler_rotation = torch.tensor(rotation_dict[joint], dtype=float) * (math.pi / 180) #load angles are in zxy  + from grades to radiants
+        rot_matrix = rot_conv.euler_angles_to_matrix(euler_rotation, "ZXY")
+        quaternions = rot_conv.matrix_to_quaternion(rot_matrix).numpy()
+        new_data[3+i*4:i*4+4+3] = quaternions
+
+    new_data[:3] = augmented_hip # append hip at head of the vector where the model expects it
+
+    return new_data
  
-def get_training_format_data(raw_data, non_end_bones, skeleton):
+def get_training_format_data(raw_data, non_end_bones, skeleton, loader):
     new_data=[]
     for frame in raw_data:
-        new_frame=get_one_frame_training_format_data(frame,  non_end_bones, skeleton)
+        new_frame=loader(frame, non_end_bones, skeleton)
         new_data=new_data+[new_frame]
     return np.array(new_data)
-
 
 
 
@@ -190,23 +240,43 @@ def get_weight_dict(skeleton):
         weight_dict=weight_dict+[(j, weight)]
     return weight_dict
 
+ 
+def get_training_format_data_rotational(raw_data, non_end_bones, skeleton, augmented_pos, loader):
+    new_data=[]
+    for frame_id, frame in enumerate(raw_data):
+        new_frame=loader(frame, non_end_bones, skeleton, augmented_pos[frame_id])
+        new_data=new_data+[new_frame]
+    return np.array(new_data)
 
-
-def get_train_data(bvh_filename):
-    
+### DATA PROCESSING ENTRY POINT #################
+def get_train_data(bvh_filename, representation):
     data=parse_frames(bvh_filename)
-    train_data=get_training_format_data(data, non_end_bones,skeleton)
+    train_data=get_training_format_data(data, non_end_bones,skeleton, load_frame_as_positional) #Extract for each frame the list of joint position compressed in 1-dim array shape (171)
+
     center=get_motion_center(train_data) #get the avg position of the hip
     center[1]=0.0 #don't center the height
+    train_data = augment_positional(train_data, -center, [0,1,0, 0.0]) # Position have to be normalized
+    
+    # We need the processd positional data in order to have the hip translated pos for rotational data
+    if representation == 'positional':
+        train_data = train_data
+    elif representation == 'euler':
+        train_data = get_training_format_data_rotational(data, non_end_bones,skeleton, train_data, load_frame_as_eulers)
+    elif representation == '6d':
+        train_data = get_training_format_data_rotational(data, non_end_bones,skeleton, train_data, load_frame_as_6d)
+    elif representation == 'quaternions':
+        train_data = get_training_format_data_rotational(data, non_end_bones,skeleton, train_data, load_frame_as_quaternions)
+    else:
+        raise Exception(f"Invalid data representation:{representation} -> allowed [positional, euler, 6d, quaternions]")
+    
 
-    new_train_data=augment_train_data(train_data, -center, [0,1,0, 0.0])
-    return new_train_data
+    return train_data
+
           
 
 def write_frames(format_filename, out_filename, data):
     
     format_lines = get_frame_format_string(format_filename)
-
     
     num_frames = data.shape[0]
     format_lines[len(format_lines)-2]="Frames:\t"+str(num_frames)+"\n"
@@ -246,7 +316,40 @@ def write_xyz_to_bvh(xyz_motion, skeleton, non_end_bones, format_filename, outpu
     
     write_frames(format_filename, output_filename, out_data)
 
-def write_traindata_to_bvh(bvh_filename, train_data):
+def write_rotation_to_bvh(rotation_angles, hip_pos, non_end_bones, format_filename, output_filename):
+    bvh_vec_length = len(non_end_bones)*3 + 6
+    
+    out_data = np.zeros([len(rotation_angles), bvh_vec_length])
+    for i in range(1, len(rotation_angles)):
+        frame_rotations = rotation_angles[i]
+        hip = hip_pos[i]
+
+        new_motion1 = helper.rotation_dic_to_vec_hip(frame_rotations, non_end_bones, hip)
+								
+        new_motion = np.array([round(a,6) for a in new_motion1])
+        new_motion[0:3] = new_motion1[0:3]
+								
+        out_data[i,:] = np.transpose(new_motion[:,np.newaxis])
+        
+    
+    write_frames(format_filename, output_filename, out_data)
+
+
+# Write switcher based on datatype
+def write_traindata_to_bvh(bvh_filename, train_data, method):
+    if method == 'positional':
+        write_position_to_bvh(bvh_filename, train_data)
+    elif method == 'euler':
+        write_eulers_to_bvh(bvh_filename, train_data)
+    elif method == '6d':
+        write_6d_to_bvh(bvh_filename, train_data)
+    elif method == 'quaternions':
+        write_quaternions_to_bvh(bvh_filename, train_data)
+    else:
+        raise Exception(f"Invalid data representation:{method} -> allowed [positional, euler, 6d, quaternions]")
+
+## POSITIONAL DATA save
+def write_position_to_bvh(bvh_filename, train_data):
     seq_length=train_data.shape[0]
     xyz_motion = []
     format_filename = standard_bvh_file
@@ -262,7 +365,7 @@ def write_traindata_to_bvh(bvh_filename, train_data):
 
         
     write_xyz_to_bvh(xyz_motion, skeleton, non_end_bones, format_filename, bvh_filename)
-    
+
 def data_vec_to_position_dic(data, skeleton):
     data = data*100
     hip_pos=data[joint_index['hip']*3:joint_index['hip']*3+3]
@@ -276,18 +379,143 @@ def data_vec_to_position_dic(data, skeleton):
             positions[joint]=positions[joint] +hip_pos
             
     return positions
+
+ ## POSITIONAL DATA save - END
+
+
+############################################################
+## Euler Data save
+##########################################################3
+def write_eulers_to_bvh(bvh_filename, train_data):
+    seq_length=train_data.shape[0]
+    
+    format_filename = standard_bvh_file
+    sequence_rotations = []
+    sequence_hip_pos = []
+    for i in range(seq_length):
+        data = train_data[i]
+        data = np.array([round(a,6) for a in train_data[i]])
+        rotation, hip = euler_data_extraction(data)        
+        sequence_rotations.append(rotation)
+        sequence_hip_pos.append(hip)
+ 
+    write_rotation_to_bvh(sequence_rotations, sequence_hip_pos, non_end_bones, format_filename, bvh_filename)
+
+def euler_data_extraction(data):
+    hip_pos=data[:3]*100 # Get position of the hip
+    
+    rotations={}
+    for joint in rotational_joints_index.keys():
+        idx = rotational_joints_index[joint]
+        rotations[joint]=data[3+idx*3:idx*3+3+3] * (180.0 / math.pi)
+    
+    return rotations, hip_pos
+## Euler Data save end
+
+
+############################################################
+## 6D Data save
+##########################################################3
+def write_6d_to_bvh(bvh_filename, train_data):
+    seq_length=train_data.shape[0]
+    
+    format_filename = standard_bvh_file
+    sequence_rotations = []
+    sequence_hip_pos = []
+    for i in range(seq_length):
+        data = train_data[i]
+        data = np.array([round(a,6) for a in train_data[i]])
+        rotation, hip = d6_data_extraction(data)        
+        sequence_rotations.append(rotation)
+        sequence_hip_pos.append(hip)
+ 
+    write_rotation_to_bvh(sequence_rotations, sequence_hip_pos, non_end_bones, format_filename, bvh_filename)
+
+def d6_data_extraction(data):
+    hip_pos=data[:3]*100 # Get position of the hip
+    
+    rotations={}
+    for joint in rotational_joints_index.keys():
+        idx = rotational_joints_index[joint]
+        d6_rotation = torch.from_numpy(data[3+idx*6:idx*6+6+3])
+        rot_mat = rot_conv.rotation_6d_to_matrix(d6_rotation)
+        euler_angles = rot_conv.matrix_to_euler_angles(rot_mat, 'ZXY').numpy() * (180.0 / math.pi)
+        rotations[joint]=euler_angles
+    
+    return rotations, hip_pos
+
+############################################################
+## Quaternions Data save
+##########################################################3
+def write_quaternions_to_bvh(bvh_filename, train_data):
+    seq_length=train_data.shape[0]
+    
+    format_filename = standard_bvh_file
+    sequence_rotations = []
+    sequence_hip_pos = []
+    for i in range(seq_length):
+        data = train_data[i]
+        data = np.array([round(a,6) for a in train_data[i]])
+        rotation, hip = quaternions_data_extraction(data)        
+        sequence_rotations.append(rotation)
+        sequence_hip_pos.append(hip)
+ 
+    write_rotation_to_bvh(sequence_rotations, sequence_hip_pos, non_end_bones, format_filename, bvh_filename)
+
+def quaternions_data_extraction(data):
+    hip_pos=data[:3]*100 # Get position of the hip
+    
+    rotations={}
+    for joint in rotational_joints_index.keys():
+        idx = rotational_joints_index[joint]
+        quaternion = torch.from_numpy(data[3+idx*4:idx*4+4+3])
+        rot_mat = rot_conv.quaternion_to_matrix(quaternion)
+        euler_angles = rot_conv.matrix_to_euler_angles(rot_mat, 'ZXY').numpy() * (180.0 / math.pi)
+        rotations[joint]=euler_angles
+    
+    return rotations, hip_pos
+
+
+###################################################################
+    pos_dic=  helper.get_skeleton_position(raw_frame_data, non_end_bones, skeleton)
+    new_data= np.zeros(len(pos_dic.keys())*3)
+    i=0
+    hip_pos=pos_dic['hip']
+    #print hip_pos
+
+    for joint in pos_dic.keys():
+        if(joint=='hip'):
+            
+            new_data[i*3:i*3+3]=pos_dic[joint].reshape(3)
+        else:
+            new_data[i*3:i*3+3]=pos_dic[joint].reshape(3)- hip_pos.reshape(3)
+        i=i+1
+    #print new_data
+    new_data=new_data*0.01
+    return new_data
+# Forward Kinematics
+def fk(hip_pos, rotation_matrices):
+    # prepare motion data
+    motion = np.zeros((132))
+    motion[:3] = hip_pos * 100
+    for joint in rotational_joints_index:
+        idx = rotational_joints_index[joint]
+        motion[3+idx*3: 3 + idx*3 + 3] = rot_conv.matrix_to_euler_angles(rotation_matrices[idx], 'ZXY')
+
+    fk_pos = helper.get_skeleton_position(motion, non_end_bones, skeleton)
+
+    pos_array = np.zeros((171))
+    for joint in fk_pos.keys():
+        idx = joint_index[joint]
+        pos_array[idx*3: idx*3 + 3] = fk_pos[joint].flatten()
+
+    return pos_array * 0.01
        
 def get_pos_dic(frame, joint_index):
     positions={}
     for key in joint_index.keys():
         positions[key]=frame[joint_index[key]*3:joint_index[key]*3+3]
     return positions
-
-
-
-#######################################################
-#################### Write train_data to bvh###########                
-
 
 
 def vector2string(data):
@@ -313,7 +541,6 @@ def get_norm(v):
     return np.sqrt( v[0]*v[0]+v[1]*v[1]+v[2]*v[2] )
 
 def get_regularized_positions(positions):
-    
     org_positions=positions
     new_positions=regularize_bones(org_positions, positions, skeleton, 'hip')
     return new_positions
@@ -387,30 +614,11 @@ def check_length(one_frame_train_data):
             b=p2-p1
             #print get_norm(b), get_norm(skeleton[joint]['offsets'])
     
-    
 
 
-		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+standard_bvh_file="train_data_bvh/standard.bvh"
+weight_translation=0.01
+skeleton, non_end_bones=read_bvh_hierarchy.read_bvh_hierarchy(standard_bvh_file)    
+sample_data=parse_frames(standard_bvh_file)
+joint_index= get_pos_joints_index(sample_data[0],non_end_bones, skeleton)
+rotational_joints_index = dict(zip(['hip'] + non_end_bones, range(len(non_end_bones)+1)))

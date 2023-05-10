@@ -1,0 +1,340 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+                        
+        ///////////////////////////////////////////////////////////////////// 
+        // POSITION /////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////
+        {
+            "name": "Gen Positional Data",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/generate_training_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "train_data_bvh/martial/", // IN
+                "train_data_xyz/positional/positional", //OUT
+                "--representation=positional"
+            ]
+        },
+        {
+            "name": "Train: positional",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/positional/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/postitional/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/positional/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=positional",
+                "--lr=0.0001"
+            ]
+        },
+        {
+            "name": "Eval: positional",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_prediction.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/positional/", // Input processed bvh
+                "--read_weight_path=runs/positional/weigths/0025000.weight",  // the ckpt to test
+                "--out_folder=eval/positional/",  //Where to save the outputs
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=positional",
+            ]
+        },
+        {
+            "name": "Synt: positional",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_synthesize_motion.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/positional/", // Input processed bvh
+                "--read_weight_path=runs/positional/weigths/0025000.weight",  // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/positional/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=positional",
+            ]
+        },
+    
+                
+        ///////////////////////////////////////////////////////////////////// 
+        // EULER ////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////
+        {
+            "name": "---------------------",
+            "type": "python",
+            "request": "launch",
+        },
+        {
+            "name": "Gen Euler Data",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/generate_training_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "train_data_bvh/martial/", // IN
+                "train_data_xyz/euler/euler", //OUT
+                "--representation=euler"
+            ]
+        },
+        {
+            "name": "Train: euler",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/euler/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/euler/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/euler/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=euler",
+                "--lr=0.0001"
+            ]
+        },
+        {
+            "name": "Eval: euler",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_prediction.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/euler/", // Input processed bvh
+                "--read_weight_path=runs/euler/weigths/0025000.weight",  // the ckpt to test
+                "--out_folder=eval/euler/",  //Where to save the outputs
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=euler",
+            ]
+        },
+        {
+            "name": "Synt: euler",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_synthesize_motion.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/euler/", // Input processed bvh
+                "--read_weight_path=runs/euler/weigths/0025000.weight",  // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/euler/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=euler",
+            ]
+        },
+        {
+            "name": "---------------------",
+            "type": "python",
+            "request": "launch",
+        },                
+        ///////////////////////////////////////////////////////////////////// 
+        // 6D  //////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////
+        {
+            "name": "Gen 6D Data",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/generate_training_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "train_data_bvh/martial/", // IN
+                "train_data_xyz/6d/6d", //OUT
+                "--representation=6d"
+            ]
+        },
+        {
+            "name": "Train: 6D",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/6d/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/6d/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/6d/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=6d",
+                "--lr=0.0001"
+            ]
+        },
+        {
+            "name": "Eval: 6D",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_prediction.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/6d/", // Input processed bvh
+                "--read_weight_path=runs/6d/weigths/0025000.weight",  // the ckpt to test
+                "--out_folder=eval/6d/",  //Where to save the outputs
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=6d",
+            ]
+        },
+        {
+            "name": "Synt: 6D",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_synthesize_motion.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/6d/", // Input processed bvh
+                "--read_weight_path=runs/6d/weigths/0025000.weight",  // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/6d/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=6d",
+            ]
+        },
+
+        ///////////////////////////////////////////////////////////////////// 
+        // Quaternion  //////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////
+        {
+            "name": "---------------------",
+            "type": "python",
+            "request": "launch",
+        },
+        {
+            "name": "Gen Quaternions Data",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/generate_training_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "train_data_bvh/martial/", // IN
+                "train_data_xyz/quaternions/quaternions", //OUT
+                "--representation=quaternions"
+            ]
+        },
+        {
+            "name": "Train: Quaternions",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/quaternions/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/quaternions/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/quaternions/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=quaternions",
+                "--lr=0.0001"
+            ]
+        },
+        {
+            "name": "Eval: Quaternions",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_prediction.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/quaternions/", // Input processed bvh
+                "--read_weight_path=runs/quaternions/weigths/0025000.weight",  // the ckpt to test
+                "--out_folder=eval/quaternions/",  //Where to save the outputs
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=quaternions",
+            ]
+        },
+        {
+            "name": "Synt: Quaternions",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_test_synthesize_motion.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/quaternions/", // Input processed bvh
+                "--read_weight_path=runs/quaternions/weigths/0025000.weight",  // the ckpt to test
+                "--write_bvh_motion_folder=eval/quaternions/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--dances_test_size=10",
+                "--representation=quaternions",
+            ]
+        },
+
+        ///////////////////////////////////////////////////////////////////// 
+        // Tests  ///////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////
+        {
+            "name": "---------------------",
+            "type": "python",
+            "request": "launch",
+        },
+        {
+            "name": "Test Representation Conversion",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/conversions_tests.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Test Loss functions",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/loss_tests.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Test Forward Kinematics",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/forward_kinematic_tests.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        }
+    ]
+}
