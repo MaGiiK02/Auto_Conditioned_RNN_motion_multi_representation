@@ -14,9 +14,9 @@ Hip_index = read_bvh.joint_index['hip']
 Seq_len=100
 Hidden_size = 1024
 Joints_num =  57
+Rotational_joints_num = len(read_bvh.rotational_joints_index)
 Condition_num=5
 Groundtruth_num=5
-In_frame_size = Joints_num*3
 
 
 class acLSTM(nn.Module):
@@ -188,7 +188,7 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
     if representation == '6d': jont_data_size = 6
     elif representation == 'quaternions': jont_data_size = 4
 
-    frame_size = 171 if representation == 'positional' else 3 + Joints_num*jont_data_size
+    frame_size = Joints_num*3 if representation == 'positional' else 3 + Rotational_joints_num*jont_data_size
     model = acLSTM(
         in_frame_size=frame_size,
         out_frame_size=frame_size
@@ -220,54 +220,14 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
         for i in range(initial_seq_len):
             sample_seq=sample_seq+[dance[int(i*speed+start_id)]]
 
-        # ref_seq=[]
-        # for i in range(initial_seq_len+generate_frames_number):
-        #     ref_seq=ref_seq+[dance[int(i*speed+start_id)]]
-        
         dance_batch=dance_batch+[sample_seq]
 
-    # save reference sequencies
-    # for b in range(dances_test_size):
-    #     out_seq=np.array(write_bvh_motion_folder[b].data.tolist()).reshape(-1,In_frame_size)
-    #     last_x=0.0
-    #     last_z=0.0
-    #     for frame in range(out_seq.shape[0]):
-    #         out_seq[frame,Hip_index*3]=out_seq[frame,Hip_index*3]+last_x
-    #         last_x=out_seq[frame,Hip_index*3]
-            
-    #         out_seq[frame,Hip_index*3+2]=out_seq[frame,Hip_index*3+2]+last_z
-    #         last_z=out_seq[frame,Hip_index*3+2]
-            
-    #     read_bvh.write_traindata_to_bvh(write_bvh_motion_folder+"gt"+"%02d"%b+".bvh", out_seq, representation)
+   
 
     # Prediction        
     dance_batch_np=np.array(dance_batch)    
-    pred_seq = generate_seq(dance_batch_np, generate_frames_number, model, write_bvh_motion_folder, representation, frame_size)
-    
-    # if representation == 'euler': 
-    #     ref_seq = fk_euler(ref_seq)
-    #     pred_seq = fk_euler(pred_seq)
-    # elif representation == '6d': 
-    #     ref_seq = fk_6D(ref_seq)
-    #     pred_seq = fk_6D(pred_seq)
-    # elif representation == 'quaternions': 
-    #     ref_seq = fk_quaternions(ref_seq)
-    #     pred_seq = fk_quaternions(pred_seq)
-
-    # errors = pd.DataFrame(columns=['Sequence', 'MSE_FK'])
-    # # Dance wise error
-    # for b in range(dances_test_size):
-    #     sequence_error = torch.mean(torch.sum(torch.square(ref_seq[b] - pred_seq[b])))
-    #     print(f"Sequence {b}: {sequence_error.item()}")
-    #     errors = errors.append({
-    #         "Sequence": b,
-    #         "MSE_FK": sequence_error 
-    #     }, ignore_index=True)
-    # errors.to_csv(write_bvh_motion_folder + "sequencies_errors.csv")
-        
-
-    # global_error = torch.mean(torch.sum(torch.square(ref_seq - pred_seq)))
-    # print(global_error)
+    generate_seq(dance_batch_np, generate_frames_number, model, write_bvh_motion_folder, representation, frame_size)
+   
 
 
 if __name__ == '__main__' :
@@ -290,7 +250,7 @@ if __name__ == '__main__' :
                 help='The amount of frames to generate to create the motion. (Default: 400)')
     parser.add_argument('--representation', default=None,
             help='The representation to use to represent the rotation to the model [positional, euler, 6d, quaternions], used to infer the loss function.')
-    
+
     args = parser.parse_args()
 
     read_weight_path=args.read_weight_path                   # Example None           # Example "../train_weight_aclstm_indian/"

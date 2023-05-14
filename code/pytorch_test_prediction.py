@@ -14,9 +14,9 @@ Hip_index = read_bvh.joint_index['hip']
 Seq_len=100
 Hidden_size = 1024
 Joints_num =  57
+Rotational_joints_num = len(read_bvh.rotational_joints_index)
 Condition_num=5
 Groundtruth_num=5
-In_frame_size = Joints_num*3
 
 
 class acLSTM(nn.Module):
@@ -175,7 +175,7 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
     if representation == '6d': jont_data_size = 6
     elif representation == 'quaternions': jont_data_size = 4
 
-    frame_size = 171 if representation == 'positional' else 3 + Joints_num*jont_data_size
+    frame_size = Joints_num*3 if representation == 'positional' else 3 + Rotational_joints_num*jont_data_size
     model = acLSTM(
         in_frame_size=frame_size,
         out_frame_size=frame_size
@@ -222,14 +222,14 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
     ref_batch = torch.Tensor(ref_batch)
     pred_seq = torch.Tensor(pred_seq)
     if representation == 'euler': 
-        ref_batch = fk_euler(ref_batch, sequence_length=initial_seq_len+generate_frames_number)
-        pred_seq = fk_euler(pred_seq, sequence_length=initial_seq_len+generate_frames_number)
+        ref_batch = fk_euler(ref_batch)
+        pred_seq = fk_euler(pred_seq)
     elif representation == '6d': 
-        ref_batch = fk_6D(ref_batch, sequence_length=initial_seq_len+generate_frames_number)
-        pred_seq = fk_6D(pred_seq, sequence_length=initial_seq_len+generate_frames_number)
+        ref_batch = fk_6D(ref_batch)
+        pred_seq = fk_6D(pred_seq)
     elif representation == 'quaternions': 
-        ref_batch = fk_quaternions(ref_batch, sequence_length=initial_seq_len+generate_frames_number)
-        pred_seq = fk_quaternions(pred_seq, sequence_length=initial_seq_len+generate_frames_number)
+        ref_batch = fk_quaternions(ref_batch)
+        pred_seq = fk_quaternions(pred_seq)
     ref_batch = torch.Tensor(ref_batch)
     pred_seq = torch.Tensor(pred_seq)
 

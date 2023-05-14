@@ -1,54 +1,60 @@
 import torch
 import utils.rotations_conversion as rot_conv
-from read_bvh import fk
+import read_bvh
+import numpy as np
 
-def fk_euler(sequence_batch: torch.Tensor, sequence_length):
-    frame_length = 3 + 57*3
-    fk_pos = torch.zeros((sequence_batch.shape[0], sequence_length, 171))
+
+def fk_euler(sequence_batch: torch.Tensor):
+    frame_size = 3 + 57*3
+    out = []
     for b in range(sequence_batch.shape[0]):
-        sequence = sequence_batch[b].reshape((sequence_length, frame_length))
-        for f in range(sequence_length):
-            frame = sequence[f]
-            pos_hip = frame[:3]
-            rotations = frame[3:]
-            mat_rot = []
-            for r in range(int((len(rotations)/3))):
-                mat_rot.append(rot_conv.euler_angles_to_matrix(rotations[r*3: r*3+3], 'ZXY'))
+        out_seq=np.array(sequence_batch[b].data.tolist()).reshape(-1,frame_size)
+        last_x=0.0
+        last_z=0.0
+        for frame in range(out_seq.shape[0]):
+            out_seq[frame,0*3]=out_seq[frame,0*3]+last_x
+            last_x=out_seq[frame,0*3]
             
-            fk_pos[b][f] = torch.Tensor(fk(pos_hip, mat_rot))
+            out_seq[frame,0*3+2]=out_seq[frame,0*3+2]+last_z
+            last_z=out_seq[frame,0*3+2]
 
-    return fk_pos
+        read_bvh.write_traindata_to_bvh("./temp_conversion.bvh", out_seq, "euler")
+        out.append(read_bvh.get_train_data("./temp_conversion.bvh", "positional"))
+    return out
 
-def fk_6D(sequence_batch: torch.Tensor, sequence_length):
-    frame_length = 3 + 57*6
-    fk_pos = torch.zeros((sequence_batch.shape[0], sequence_length, 171))
+
+def fk_6D(sequence_batch: torch.Tensor):
+    frame_size = 3 + 57*6
+    out = []
     for b in range(sequence_batch.shape[0]):
-        sequence = sequence_batch[b].reshape((sequence_length, frame_length))
-        for f in range(sequence_length):
-            frame = sequence[f]
-            pos_hip = frame[:3]
-            rotations = frame[3:]
-            mat_rot = []
-            for r in range(int((len(rotations)/6))):
-                mat_rot.append(rot_conv.rotation_6d_to_matrix(rotations[r*6: r*6+6]))
+        out_seq=np.array(sequence_batch[b].data.tolist()).reshape(-1,frame_size)
+        last_x=0.0
+        last_z=0.0
+        for frame in range(out_seq.shape[0]):
+            out_seq[frame,0*3]=out_seq[frame,0*3]+last_x
+            last_x=out_seq[frame,0*3]
             
-            fk_pos[b][f] = torch.Tensor(fk(pos_hip, mat_rot))
+            out_seq[frame,0*3+2]=out_seq[frame,0*3+2]+last_z
+            last_z=out_seq[frame,0*3+2]
 
-    return fk_pos
+        read_bvh.write_traindata_to_bvh("./temp_conversion.bvh", out_seq, "6d")
+        out.append(read_bvh.get_train_data("./temp_conversion.bvh", "positional"))
+    return out
 
-def fk_quaternions(sequence_batch: torch.Tensor, sequence_length):
-    frame_length = 3 + 57*4
-    fk_pos = torch.zeros((sequence_batch.shape[0], sequence_length, 171))
+def fk_quaternions(sequence_batch: torch.Tensor):
+    frame_size = 3 + 57*4
+    out = []
     for b in range(sequence_batch.shape[0]):
-        sequence = sequence_batch[b].reshape((sequence_length, frame_length))
-        for f in range(sequence_length):
-            frame = sequence[f]
-            pos_hip = frame[:3]
-            rotations = frame[3:]
-            mat_rot = []
-            for r in range(int((len(rotations)/4))):
-               mat_rot.append(rot_conv.quaternion_to_matrix(rotations[r*4: r*4+4]))
+        out_seq=np.array(sequence_batch[b].data.tolist()).reshape(-1,frame_size)
+        last_x=0.0
+        last_z=0.0
+        for frame in range(out_seq.shape[0]):
+            out_seq[frame,0*3]=out_seq[frame,0*3]+last_x
+            last_x=out_seq[frame,0*3]
             
-            fk_pos[b][f] = torch.Tensor(fk(pos_hip, mat_rot))
+            out_seq[frame,0*3+2]=out_seq[frame,0*3+2]+last_z
+            last_z=out_seq[frame,0*3+2]
 
-    return fk_pos
+        read_bvh.write_traindata_to_bvh("./temp_conversion.bvh", out_seq, "quaternions")
+        out.append(read_bvh.get_train_data("./temp_conversion.bvh", "positional"))
+    return out

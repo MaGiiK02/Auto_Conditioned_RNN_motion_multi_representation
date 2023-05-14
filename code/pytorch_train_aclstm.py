@@ -16,9 +16,9 @@ Hip_index = read_bvh.joint_index['hip']
 Seq_len=100
 Hidden_size = 1024
 Joints_num =  57
+Rotational_joints_num = len(read_bvh.rotational_joints_index)
 Condition_num=5
 Groundtruth_num=5
-In_frame_size = Joints_num*3
 loss_record = pd.DataFrame(columns=['epoch', 'loss'])
 
 
@@ -210,7 +210,7 @@ def get_dance_len_lst(dances):
     return index_lst
     
 # dances: [dance1, dance2, dance3,....]
-def train(dances, frame_rate, batch, seq_len, read_weight_path, write_weight_folder, write_bvh_motion_folder, representation, lr=0.0001, total_iter=500000):
+def train(dances, frame_rate, batch, seq_len, read_weight_path, write_weight_folder, write_bvh_motion_folder, representation, lr=0.0001, total_iter=500000, weighted_loss=False):
     loss_record = pd.DataFrame(columns=['epoch', 'loss'])
     seq_len=seq_len+2
     torch.cuda.set_device(0)
@@ -221,16 +221,16 @@ def train(dances, frame_rate, batch, seq_len, read_weight_path, write_weight_fol
     elif representation == 'quaternions': jont_data_size = 4
 
 
-    frame_size = 171 if representation == 'positional' else 3 + Joints_num*jont_data_size
+    frame_size = Joints_num*3 if representation == 'positional' else 3 + Rotational_joints_num*jont_data_size
     model = acLSTM(
         in_frame_size=frame_size,
         out_frame_size=frame_size
     )
         
     loss_function = model.calculate_loss
-    if representation == 'euler': loss_function = losses.angle_distance
-    elif representation == '6d': loss_function = losses.mae
-    elif representation == 'quaternions': loss_function = losses.quaternion_loss    
+    if representation == 'euler': loss_function = losses.angle_distance if not weighted_loss else losses.joint_weighted_angle_distance
+    elif representation == '6d': loss_function = losses.mae if not weighted_loss else losses.joint_weighted_mae_6d
+    elif representation == 'quaternions': loss_function = losses.quaternion_loss if not weighted_loss else losses.joint_weighted_quaternion_loss    
     
     if(read_weight_path!=""):
         model.load_state_dict(torch.load(read_weight_path))
@@ -329,6 +329,8 @@ if __name__ == '__main__' :
                 help='The learning rate to use. (Default: 0.0001)')
     parser.add_argument('--representation', default=None,
             help='The representation to use to represent the rotation to the model [positional, euler, 6d, quaternions], used to infer the loss function.')
+    parser.add_argument('--weighted_loss', default=False,
+            help='Enable the use of the weighted loss function for rotation base representation, making error in the ends jpints less important of error of joint near to the hip.')
     
     args = parser.parse_args()
 
@@ -340,6 +342,7 @@ if __name__ == '__main__' :
     batch=int(args.batch_size)                               # Example 32 
     epochs=int(args.epochs)                                  # Example 2000000 
     representation=args.representation
+    weighted_loss=args.weighted_loss
     lr = float(args.lr)                                      # Example 0.0001 
                                     
 
@@ -356,6 +359,6 @@ if __name__ == '__main__' :
     dances = load_dances(dances_folder)
 
     ## representations switch
-    train(dances, dance_frame_rate, batch, 100, read_weight_path, write_weight_folder, write_bvh_motion_folder, representation, lr, epochs)
+    train(dances, dance_frame_rate, batch, 100, read_weight_path, write_weight_folder, write_bvh_motion_folder, representation, lr, epochs, weighted_loss)
 
 

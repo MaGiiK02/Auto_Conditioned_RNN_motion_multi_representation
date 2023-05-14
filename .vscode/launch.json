@@ -119,6 +119,27 @@
             ]
         },
         {
+            "name": "Train: euler Weighted",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/euler/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/euler_weighted/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/euler_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=euler",
+                "--lr=0.0001",
+                "--weighted_loss=True"
+            ]
+        },
+        {
             "name": "Eval: euler",
             "type": "python",
             "request": "launch",
@@ -191,6 +212,27 @@
                 "--epochs=25001", //use a lower number of epochs
                 "--representation=6d",
                 "--lr=0.0001"
+            ]
+        },
+        {
+            "name": "Train: 6D Weighted",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/6d/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/6d_weighted/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/6d_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=6d",
+                "--lr=0.0001",
+                "--weighted_loss=True"
             ]
         },
         {
@@ -267,6 +309,27 @@
                 "--epochs=25001", //use a lower number of epochs
                 "--representation=quaternions",
                 "--lr=0.0001"
+            ]
+        },
+        {
+            "name": "Train: Quaternions Weighted",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/code/pytorch_train_aclstm.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
+                "--dances_folder=train_data_xyz/quaternions/", // Input processed bvh
+                //"--read_weight_path=",  // TO continue traning from ckpt
+                "--write_weight_folder=runs/quaternions_weighted/weigths/", //were to store weights during train
+                "--write_bvh_motion_folder=runs/quaternions_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--dance_frame_rate=120",
+                "--batch_size=32",
+                "--epochs=25001", //use a lower number of epochs
+                "--representation=quaternions",
+                "--lr=0.0001",
+                "--weighted_loss=True"
             ]
         },
         {

@@ -1,7 +1,9 @@
 import torch
-import math
 import torch.nn.functional as tf
-from utils.rotations_conversion import standardize_quaternion 
+from read_bvh import get_rotation_weight_dict, rotational_joints_index
+
+Rotational_joint = len(rotational_joints_index)
+LOSS_WEIGHTS = torch.Tensor(get_rotation_weight_dict())
 
 def angle_distance(x: torch.Tensor, y: torch.Tensor):
     cos_error = torch.cos(x - y)
@@ -25,22 +27,22 @@ def quaternion_loss(x: torch.Tensor, y: torch.Tensor):
     return torch.mean(2 * torch.arccos(angle.abs())) 
 
 
-
-
 # Personal Experiment
-def joint_weighted_angle_distance(x: torch.Tensor, y: torch.Tensor, joint_weight_map):
+def joint_weighted_angle_distance(x: torch.Tensor, y: torch.Tensor):
     error = 1 - torch.cos(x - y)
-    error = x.reshape((x.shape[0], -1, 6))
-    weighted_error = torch.einsum('bje,i->bje', error, joint_weight_map).reshape(x.shape[0],-1)
+    error = error.reshape((error.shape[0], -1, Rotational_joint, 3))
+    single_angle_error = error.mean(3) # Mean the error along the angles of the joint to apply the weighted loss
+    weighted_error = torch.einsum('bsj,j->bsj', single_angle_error, 1/LOSS_WEIGHTS).reshape(x.shape[0],-1)
     return torch.mean(weighted_error)
 
-def joint_weighted_mae_6d(x: torch.Tensor, y: torch.Tensor, joint_weight_map):
+def joint_weighted_mae_6d(x: torch.Tensor, y: torch.Tensor):
     error = torch.abs(x - y)
-    error = x.reshape((x.shape[0], -1, 6))
-    weighted_error = torch.einsum('bje,i->bje', error, joint_weight_map).reshape(x.shape[0],-1)
+    error = error.reshape((error.shape[0], -1, Rotational_joint, 6))
+    single_angle_error = error.mean(3) # Mean the error along the angles of the joint to apply the weighted loss
+    weighted_error = torch.einsum('bsj,j->bsj', single_angle_error, 1/LOSS_WEIGHTS).reshape(x.shape[0],-1)
     return torch.mean(weighted_error)
 
-def joint_weighted_quaternion_loss(x: torch.Tensor, y: torch.Tensor, joint_weight_map):
+def joint_weighted_quaternion_loss(x: torch.Tensor, y: torch.Tensor):
     x = x.reshape((x.shape[0], -1, 4))
     y = y.reshape((y.shape[0], -1, 4))
 
@@ -55,5 +57,5 @@ def joint_weighted_quaternion_loss(x: torch.Tensor, y: torch.Tensor, joint_weigh
     # Calc angle error
     error = 2 * torch.arccos(angle.abs())
 
-    weighted_error = torch.einsum('bje,i->bje', error, joint_weight_map).reshape(x.shape[0],-1)
+    weighted_error = torch.einsum('bsj,j->bsj', error, 1/LOSS_WEIGHTS).reshape(x.shape[0],-1)
     return torch.mean(weighted_error) 

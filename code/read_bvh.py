@@ -169,7 +169,7 @@ def load_frame_as_eulers(raw_frame_data, non_end_bones, skeleton, augmented_pos)
     # Extraction of the rotations
     rotation_dict = helper.get_skeleton_rotations(raw_frame_data, non_end_bones, skeleton)
 
-    new_data= np.zeros(len(rotation_dict.keys())*3 + 3)
+    new_data = np.zeros(len(rotational_joints_index)*3 + 3)
     for joint in rotational_joints_index.keys():
         if rotation_dict[joint] is None: continue # Teminal bones have no rotations
         i = rotational_joints_index[joint]
@@ -186,7 +186,7 @@ def load_frame_as_6d(raw_frame_data, non_end_bones, skeleton, augmented_pos):
     # Extraction of the rotations
     rotation_dict = helper.get_skeleton_rotations(raw_frame_data, non_end_bones, skeleton)
 
-    new_data= np.zeros(len(rotation_dict.keys())*6 + 3)
+    new_data = np.zeros(len(rotational_joints_index)*6 + 3)
     for joint in rotational_joints_index.keys():
         if rotation_dict[joint] is None: continue # Teminal bones have no rotations
         i = rotational_joints_index[joint]
@@ -206,7 +206,7 @@ def load_frame_as_quaternions(raw_frame_data, non_end_bones, skeleton, augmented
     # Extraction of the rotations
     rotation_dict = helper.get_skeleton_rotations(raw_frame_data, non_end_bones, skeleton)
 
-    new_data= np.zeros(len(rotation_dict.keys())*4 + 3)
+    new_data = np.zeros(len(rotational_joints_index)*4 + 3)
     for joint in rotational_joints_index.keys():
         if rotation_dict[joint] is None: continue # Teminal bones have no rotations
         i = rotational_joints_index[joint]
@@ -238,6 +238,18 @@ def get_weight_dict(skeleton):
             joint=skeleton[joint]['parent']
         weight= pow(math.e, -parent_number/5.0)
         weight_dict=weight_dict+[(j, weight)]
+    return weight_dict
+
+def get_rotation_weight_dict():
+    weight_dict=[]
+    for joint in rotational_joints_index:
+        parent_number=0.0
+        while (skeleton[joint]['parent']!=None):
+            parent_number=parent_number+1
+            joint=skeleton[joint]['parent']
+        weight = parent_number+1
+        weight_dict=weight_dict+[weight]
+
     return weight_dict
 
  
@@ -477,37 +489,23 @@ def quaternions_data_extraction(data):
 
 
 ###################################################################
-    pos_dic=  helper.get_skeleton_position(raw_frame_data, non_end_bones, skeleton)
-    new_data= np.zeros(len(pos_dic.keys())*3)
-    i=0
-    hip_pos=pos_dic['hip']
-    #print hip_pos
 
-    for joint in pos_dic.keys():
-        if(joint=='hip'):
-            
-            new_data[i*3:i*3+3]=pos_dic[joint].reshape(3)
-        else:
-            new_data[i*3:i*3+3]=pos_dic[joint].reshape(3)- hip_pos.reshape(3)
-        i=i+1
-    #print new_data
-    new_data=new_data*0.01
-    return new_data
 # Forward Kinematics
 def fk(hip_pos, rotation_matrices):
     # prepare motion data
     motion = np.zeros((132))
     motion[:3] = hip_pos * 100
-    for joint in rotational_joints_index:
+    for joint in rotational_joints_index.keys():
         idx = rotational_joints_index[joint]
-        motion[3+idx*3: 3 + idx*3 + 3] = rot_conv.matrix_to_euler_angles(rotation_matrices[idx], 'ZXY')
+        motion[3+idx*3: 3 + idx*3 + 3] = rot_conv.matrix_to_euler_angles(rotation_matrices[idx], 'ZXY') * (180.0 / math.pi)
 
     fk_pos = helper.get_skeleton_position(motion, non_end_bones, skeleton)
 
     pos_array = np.zeros((171))
+    idx = 0
     for joint in fk_pos.keys():
-        idx = joint_index[joint]
         pos_array[idx*3: idx*3 + 3] = fk_pos[joint].flatten()
+        idx+=1
 
     return pos_array * 0.01
        
