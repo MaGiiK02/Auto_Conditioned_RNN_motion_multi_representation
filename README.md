@@ -1,5 +1,5 @@
 # acLSTM_motion
-This folder contains an implementation of acRNN for the CMU motion database written in Pytorch.
+This folder contains an implementation of acRNN for the CMU motion database written in Pytorch, extended with euler 6D and quaternion representation of the frame data.
 
 See the following links for more background:
 
