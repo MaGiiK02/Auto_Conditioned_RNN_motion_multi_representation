@@ -171,6 +171,7 @@ def get_dance_len_lst(dances):
 def load_dances(dance_folder):
     dance_files=os.listdir(dance_folder)
     dances=[]
+    dance_files.sort()
     for dance_file in dance_files:
         if not ".bvh" in dance_file: continue
         print ("load "+dance_file)
@@ -178,7 +179,32 @@ def load_dances(dance_folder):
         print ("frame number: "+ str(dance.shape[0]))
         dances=dances+[dance]
     return dances
+
+def save_ref(initial_seq_np,  save_dance_folder, representation, In_frame_size):
+    Hip_index = read_bvh.joint_index['hip']
+    if representation != "positional": Hip_index = 0 # Hip placed at the start of the data for rotations
+    #set hip_x and hip_z as the difference from the future frame to current frame
+    dif = initial_seq_np[:, 1:initial_seq_np.shape[1]] - initial_seq_np[:, 0: initial_seq_np.shape[1]-1]
+    initial_seq_dif_hip_x_z_np = initial_seq_np[:, 0:initial_seq_np.shape[1]-1].copy()
+    initial_seq_dif_hip_x_z_np[:,:,Hip_index*3]=dif[:,:,Hip_index*3]
+    initial_seq_dif_hip_x_z_np[:,:,Hip_index*3+2]=dif[:,:,Hip_index*3+2]
     
+    initial_seq  = torch.autograd.Variable(torch.FloatTensor(initial_seq_dif_hip_x_z_np.tolist()).cuda() )
+    batch=initial_seq_np.shape[0]
+    for b in range(batch):
+        
+        out_seq=np.array(initial_seq[b].data.tolist()).reshape(-1,In_frame_size)
+        last_x=0.0
+        last_z=0.0
+        for frame in range(out_seq.shape[0]):
+            out_seq[frame,Hip_index*3]=out_seq[frame,Hip_index*3]+last_x
+            last_x=out_seq[frame,Hip_index*3]
+            
+            out_seq[frame,Hip_index*3+2]=out_seq[frame,Hip_index*3+2]+last_z
+            last_z=out_seq[frame,Hip_index*3+2]
+            
+        read_bvh.write_traindata_to_bvh(save_dance_folder+"reference"+"%02d"%b+".bvh", out_seq, representation)
+
 # dances: [dance1, dance2, dance3,....]
 def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate_frames_number, read_weight_path, write_bvh_motion_folder, representation):
     
@@ -208,26 +234,33 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
     speed=frame_rate/30 # we train the network with frame rate of 30
     
     
-    dance_batch=[]
+    dance_batch = []
+    ref_batch = []
     for b in range(dances_test_size):
         #randomly pick up one dance. the longer the dance is the more likely the dance is picked up
         dance_id = dance_len_lst[seeded_random.randint(0,random_range)]
         dance=dances[dance_id].copy()
         dance_len = dance.shape[0]
-            
         start_id= seeded_random.randint(10, int(dance_len-initial_seq_len*speed-10)) #the first and last several frames are sometimes noisy. 
         sample_seq=[]
         for i in range(initial_seq_len):
             sample_seq=sample_seq+[dance[int(i*speed+start_id)]]
-
+        
         dance_batch=dance_batch+[sample_seq]
 
-   
+        ref_seq=[]
+        max_f = initial_seq_len
+        for i in range(max_f):
+            ref_seq=ref_seq+[dance[int(i*speed+start_id)]]
 
-    # Prediction        
-    dance_batch_np=np.array(dance_batch)    
+        ref_batch=ref_batch+[ref_seq]
+
+    # store ref
+    ref_batch_np = np.array(ref_batch)  
+    save_ref(ref_batch_np, write_bvh_motion_folder, representation, frame_size)
+    # Prediction
+    dance_batch_np = np.array(dance_batch)           
     generate_seq(dance_batch_np, generate_frames_number, model, write_bvh_motion_folder, representation, frame_size)
-   
 
 
 if __name__ == '__main__' :

@@ -3,7 +3,7 @@ import shutil
 import os
 
 INPUT = '/home/mangelini/Develop/UCY/Auto_Conditioned_RNN_motion/train_data_bvh/salsa/01.bvh'
-OUT= '/home/mangelini/Develop/UCY/Auto_Conditioned_RNN_motion/tests/conversion'
+OUT = '/home/mangelini/Develop/UCY/Auto_Conditioned_RNN_motion/tests/conversion'
 REPS = ['positional', 'euler', '6d', 'quaternions',]
 
 if __name__ == '__main__':

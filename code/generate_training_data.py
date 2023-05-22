@@ -7,16 +7,21 @@ import os
 
 def generate_traindata_from_bvh(src_bvh_folder, tar_traindata_folder, representation):
     print ("Generating training data for "+ src_bvh_folder)
-    if (os.path.exists(tar_traindata_folder)==False):
-        os.makedirs(tar_traindata_folder)
+    if (os.path.exists(tar_traindata_folder+'/train/')==False):
+        os.makedirs(tar_traindata_folder+'/train/')
+    if (os.path.exists(tar_traindata_folder+'/test/')==False):
+        os.makedirs(tar_traindata_folder+'/test/')
     bvh_dances_names=listdir(src_bvh_folder)
-    for bvh_dance_name in bvh_dances_names:
+    bvh_dances_names.sort()
+    test_idx = int(len(bvh_dances_names)*0.7) -1
+    for idx, bvh_dance_name in enumerate(bvh_dances_names):
         name_len=len(bvh_dance_name)
         if(name_len>4):
             if(bvh_dance_name[name_len-4: name_len]==".bvh"):
                 print ("Processing "+bvh_dance_name)
                 dance=read_bvh.get_train_data(src_bvh_folder+bvh_dance_name, representation)
-                np.save(tar_traindata_folder+bvh_dance_name+".npy", dance)
+                if idx <= test_idx: np.save(tar_traindata_folder+'/train/'+bvh_dance_name+".npy", dance)
+                else: np.save(tar_traindata_folder+'/test/'+bvh_dance_name+".npy", dance)
                 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser(description='ACLSTM-Train')

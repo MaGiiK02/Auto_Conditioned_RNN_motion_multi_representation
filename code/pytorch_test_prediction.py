@@ -49,9 +49,7 @@ class acLSTM(nn.Module):
     #vec_h [b*1024,b*1024,b*1024] vec_c [b*1024,b*1024,b*1024]
     #out_frame b*In_frame_size
     #vec_h_new [b*1024,b*1024,b*1024] vec_c_new [b*1024,b*1024,b*1024]
-    def forward_lstm(self, in_frame, vec_h, vec_c):
-
-        
+    def forward_lstm(self, in_frame, vec_h, vec_c):     
         vec_h0,vec_c0=self.lstm1(in_frame, (vec_h[0],vec_c[0]))
         vec_h1,vec_c1=self.lstm2(vec_h[0], (vec_h[1],vec_c[1]))
         vec_h2,vec_c2=self.lstm3(vec_h[1], (vec_h[2],vec_c[2]))
@@ -165,6 +163,17 @@ def load_dances(dance_folder):
         print ("frame number: "+ str(dance.shape[0]))
         dances=dances+[dance]
     return dances
+
+def process_ref(initial_seq_np, representation):
+    Hip_index = read_bvh.joint_index['hip']
+    if representation != "positional": Hip_index = 0 # Hip placed at the start of the data for rotations
+    #set hip_x and hip_z as the difference from the future frame to current frame
+    dif = initial_seq_np[:, 1:initial_seq_np.shape[1]] - initial_seq_np[:, 0: initial_seq_np.shape[1]-1]
+    initial_seq_dif_hip_x_z_np = initial_seq_np[:, 0:initial_seq_np.shape[1]-1].copy()
+    initial_seq_dif_hip_x_z_np[:,:,Hip_index*3]=dif[:,:,Hip_index*3]
+    initial_seq_dif_hip_x_z_np[:,:,Hip_index*3+2]=dif[:,:,Hip_index*3+2]
+    
+    return torch.autograd.Variable(torch.FloatTensor(initial_seq_dif_hip_x_z_np.tolist()).cpu() )
     
 # dances: [dance1, dance2, dance3,....]
 def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate_frames_number, read_weight_path, our_folder, representation):
@@ -215,6 +224,10 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
         ref_batch=ref_batch+[ref_seq]
         dance_batch=dance_batch+[sample_seq]
 
+    # process ref 
+    ref_batch_np = np.array(ref_batch)   
+    ref_batch = process_ref(ref_batch_np, representation)
+
     # Prediction        
     dance_batch_np=np.array(dance_batch)    
     pred_seq = generate_seq(dance_batch_np, generate_frames_number, model, representation, frame_size)
@@ -239,7 +252,7 @@ def test(dance_batch_np, frame_rate, dances_test_size, initial_seq_len, generate
     # Dance-frame wise error
     for b in range(dances_test_size):
         sequence_errors = {'Sequence': b,}
-        for f in range(initial_seq_len, initial_seq_len+generate_frames_number):
+        for f in range(initial_seq_len, initial_seq_len+generate_frames_number-1):
             frame_error = torch.mean(torch.sum(torch.square(ref_batch[b][f] - pred_seq[b][f]))).item()
             sequence_errors[f'mse_frame_error_{f-initial_seq_len}'] = frame_error
         errors = errors.append(sequence_errors, ignore_index=True)

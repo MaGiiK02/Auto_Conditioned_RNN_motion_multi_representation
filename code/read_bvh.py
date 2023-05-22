@@ -286,12 +286,16 @@ def get_train_data(bvh_filename, representation):
 
           
 
-def write_frames(format_filename, out_filename, data):
+def write_frames(format_filename, out_filename, data, hipswitch):
     
     format_lines = get_frame_format_string(format_filename)
     
     num_frames = data.shape[0]
     format_lines[len(format_lines)-2]="Frames:\t"+str(num_frames)+"\n"
+
+   # if ( not hipswitch):
+     #   format_lines[4] = format_lines[4].replace("6 Xposition Yposition Zposition Zrotation Xrotation Yrotation")
+
     
     bvh_file = open(out_filename, "w")
     bvh_file.writelines(format_lines)
@@ -326,7 +330,7 @@ def write_xyz_to_bvh(xyz_motion, skeleton, non_end_bones, format_filename, outpu
         out_data[i,:] = np.transpose(new_motion[:,np.newaxis])
         
     
-    write_frames(format_filename, output_filename, out_data)
+    write_frames(format_filename, output_filename, out_data, True)
 
 def write_rotation_to_bvh(rotation_angles, hip_pos, non_end_bones, format_filename, output_filename):
     bvh_vec_length = len(non_end_bones)*3 + 6
@@ -344,7 +348,7 @@ def write_rotation_to_bvh(rotation_angles, hip_pos, non_end_bones, format_filena
         out_data[i,:] = np.transpose(new_motion[:,np.newaxis])
         
     
-    write_frames(format_filename, output_filename, out_data)
+    write_frames(format_filename, output_filename, out_data, False)
 
 
 # Write switcher based on datatype
