@@ -1,5 +1,8 @@
 # acLSTM_motion
-This folder contains an implementation of acRNN tha is also adapted to use different representations as Euler, 6D and Quaternions over the Positional representation if motion the origianl paper use.
+
+This folder contains an implementation of acRNN for the CMU motion database written in Pytorch, extended with euler 6D and quaternion representation of the frame data.
+
+See the following links for more background:
 
 [Auto-Conditioned Recurrent Networks for Extended Complex Human Motion Synthesis](https://arxiv.org/abs/1707.05363)
 
