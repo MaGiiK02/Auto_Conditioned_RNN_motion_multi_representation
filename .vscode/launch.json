@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-                        
         ///////////////////////////////////////////////////////////////////// 
         // POSITION /////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////
@@ -33,7 +32,7 @@
                 "--dances_folder=train_data_xyz/positional/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/postitional/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/positional/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/positional/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -51,8 +50,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/positional/test/", // Input processed bvh
-                "--read_weight_path=runs/positional/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/positional/",  //Where to save the outputs
+                "--read_weight_path=runs/positional/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/positional/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=positional",
@@ -68,15 +67,13 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/positional/test/", // Input processed bvh
-                "--read_weight_path=runs/positional/weigths/0025000.weight",  // TO continue traning from ckpt
-                "--write_bvh_motion_folder=eval/positional/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/positional/weigths/0025000.weight", // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/positional/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=positional",
             ]
         },
-    
-                
         ///////////////////////////////////////////////////////////////////// 
         // EULER ////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////
@@ -110,7 +107,7 @@
                 "--dances_folder=train_data_xyz/euler/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/euler/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/euler/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/euler/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -128,8 +125,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/euler/test/", // Input processed bvh
-                "--read_weight_path=runs/euler/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/euler/",  //Where to save the outputs
+                "--read_weight_path=runs/euler/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/euler/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=euler",
@@ -145,8 +142,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/euler/test/", // Input processed bvh
-                "--read_weight_path=runs/euler/weigths/0025000.weight",  // TO continue traning from ckpt
-                "--write_bvh_motion_folder=eval/euler/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/euler/weigths/0025000.weight", // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/euler/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=euler",
@@ -164,7 +161,7 @@
                 "--dances_folder=train_data_xyz/euler/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/euler_weighted/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/euler_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/euler_weighted/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -183,8 +180,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/euler/test/", // Input processed bvh
-                "--read_weight_path=runs/euler_weighted/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/euler_weighted/",  //Where to save the outputs
+                "--read_weight_path=runs/euler_weighted/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/euler_weighted/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=euler",
@@ -200,8 +197,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/euler/test/", // Input processed bvh
-                "--read_weight_path=runs/euler_weighted/weigths/0025000.weight",  // TO continue traning from ckpt
-                "--write_bvh_motion_folder=eval/euler_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/euler_weighted/weigths/0025000.weight", // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/euler_weighted/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=euler",
@@ -211,7 +208,7 @@
             "name": "---------------------",
             "type": "python",
             "request": "launch",
-        },                
+        },
         ///////////////////////////////////////////////////////////////////// 
         // 6D  //////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////
@@ -240,7 +237,7 @@
                 "--dances_folder=train_data_xyz/6d/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/6d/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/6d/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/6d/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -258,8 +255,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/6d/test/", // Input processed bvh
-                "--read_weight_path=runs/6d/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/6d/",  //Where to save the outputs
+                "--read_weight_path=runs/6d/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/6d/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=6d",
@@ -275,8 +272,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/6d/test/", // Input processed bvh
-                "--read_weight_path=runs/6d/weigths/0025000.weight",  // TO continue traning from ckpt
-                "--write_bvh_motion_folder=eval/6d/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/6d/weigths/0025000.weight", // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/6d/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=6d",
@@ -294,7 +291,7 @@
                 "--dances_folder=train_data_xyz/6d/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/6d_weighted/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/6d_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/6d_weighted/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -313,8 +310,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/6d/test/", // Input processed bvh
-                "--read_weight_path=runs/6d_weighted/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/6d_weighted/",  //Where to save the outputs
+                "--read_weight_path=runs/6d_weighted/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/6d_weighted/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=6d",
@@ -330,14 +327,13 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/6d/test/", // Input processed bvh
-                "--read_weight_path=runs/6d_weighted/weigths/0025000.weight",  // TO continue traning from ckpt
-                "--write_bvh_motion_folder=eval/6d_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/6d_weighted/weigths/0025000.weight", // TO continue traning from ckpt
+                "--write_bvh_motion_folder=eval/6d_weighted/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=6d",
             ]
         },
-
         ///////////////////////////////////////////////////////////////////// 
         // Quaternion  //////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////
@@ -371,7 +367,7 @@
                 "--dances_folder=train_data_xyz/quaternions/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/quaternions/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/quaternions/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/quaternions/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -389,8 +385,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/quaternions/test/", // Input processed bvh
-                "--read_weight_path=runs/quaternions/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/quaternions/",  //Where to save the outputs
+                "--read_weight_path=runs/quaternions/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/quaternions/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=quaternions",
@@ -406,8 +402,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/quaternions/test/", // Input processed bvh
-                "--read_weight_path=runs/quaternions/weigths/0025000.weight",  // the ckpt to test
-                "--write_bvh_motion_folder=eval/quaternions/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/quaternions/weigths/0025000.weight", // the ckpt to test
+                "--write_bvh_motion_folder=eval/quaternions/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=quaternions",
@@ -425,7 +421,7 @@
                 "--dances_folder=train_data_xyz/quaternions/train/", // Input processed bvh
                 //"--read_weight_path=",  // TO continue traning from ckpt
                 "--write_weight_folder=runs/quaternions_weighted/weigths/", //were to store weights during train
-                "--write_bvh_motion_folder=runs/quaternions_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--write_bvh_motion_folder=runs/quaternions_weighted/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--batch_size=32",
                 "--epochs=25001", //use a lower number of epochs
@@ -444,8 +440,8 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/quaternions/test/", // Input processed bvh
-                "--read_weight_path=runs/quaternions_weighted/weigths/0025000.weight",  // the ckpt to test
-                "--out_folder=eval/quaternions_weighted/",  //Where to save the outputs
+                "--read_weight_path=runs/quaternions_weighted/weigths/0025000.weight", // the ckpt to test
+                "--out_folder=eval/quaternions_weighted/", //Where to save the outputs
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=quaternions",
@@ -461,14 +457,13 @@
             "args": [
                 //--representation=positional --dances_folder=train_data_xyz/positional/ --write_weight_folder=run/postitional/weigths/ --write_bvh_motion_folder=runs/positional/bvh/ --dance_frame_rate=120 --batch_size=32 --epochs=50000
                 "--dances_folder=train_data_xyz/quaternions/test/", // Input processed bvh
-                "--read_weight_path=runs/quaternions_weighted/weigths/0025000.weight",  // the ckpt to test
-                "--write_bvh_motion_folder=eval/quaternions_weighted/bvh/",  //Where to tore the generate motion for testing
+                "--read_weight_path=runs/quaternions_weighted/weigths/0025000.weight", // the ckpt to test
+                "--write_bvh_motion_folder=eval/quaternions_weighted/bvh/", //Where to tore the generate motion for testing
                 "--dance_frame_rate=120",
                 "--dances_test_size=10",
                 "--representation=quaternions",
             ]
         },
-
         ///////////////////////////////////////////////////////////////////// 
         // Tests  ///////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////
@@ -500,6 +495,14 @@
             "program": "${workspaceFolder}/code/forward_kinematic_tests.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-        }
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
     ]
 }
