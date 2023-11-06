@@ -1,6 +1,6 @@
 # acLSTM_motion
 
-This folder contains an implementation of acRNN for the CMU motion database written in Pytorch, extended with euler 6D and quaternion representation of the frame data.
+This folder contains an implementation of acRNN for the CMU motion database written in Pytorch, extended with euler, 6D, and quaternion representations of the frame data.
 
 See the following links for more background:
 
@@ -24,11 +24,11 @@ pip install -r requirements.txt
 ```
 
 ### VS-CODE (Racomended)
-This project has a reaady to use *lauch.json* config for VS-CODE, as such you will have all the configurations ready to run on the debug page.
+This project has a reaady to use *lauch.json* config for VS-CODE, as such you will have all the configurations ready to run on the debug tab of the editor.
 
 ### Data Preparation
 
-To begin, you need to download the motion data form the CMU motion database in the form of bvh files. I have already put some sample bvh files including "salsa", "martial" and "indian" in the "train_data_bvh" folder. Or use the bvh file already present inside the `./train_data_bvh` folder.
+To begin, you need to download the motion data form the CMU motion database in the form of bvh files. Or use the bvh file already present inside the `./train_data_bvh` folder (I have already put some sample bvh files including "salsa", "martial" and "indian" in the "train_data_bvh" folder).
 
 Then to transform the bvh files into training data, go to the folder "code" and run [generate_training_data.py](code/generate_training_data.py), it will convert the data and keep 30% of sequencies for testing.
 
